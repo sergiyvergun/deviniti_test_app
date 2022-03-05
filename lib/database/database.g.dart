@@ -83,6 +83,8 @@ class _$AppDatabase extends AppDatabase {
       onCreate: (database, version) async {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `PlantType` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY (`id`))');
+        await database.execute(
+            'CREATE TABLE IF NOT EXISTS `Plant` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT NOT NULL, `plantTypeId` INTEGER NOT NULL, `date` INTEGER NOT NULL)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -104,7 +106,26 @@ class _$Dao extends Dao {
             'PlantType',
             (PlantType item) =>
                 <String, Object?>{'id': item.id, 'name': item.name},
-            changeListener);
+            changeListener),
+        _plantInsertionAdapter = InsertionAdapter(
+            database,
+            'Plant',
+            (Plant item) => <String, Object?>{
+                  'id': item.id,
+                  'name': item.name,
+                  'plantTypeId': item.plantTypeId,
+                  'date': item.date
+                }),
+        _plantUpdateAdapter = UpdateAdapter(
+            database,
+            'Plant',
+            ['id'],
+            (Plant item) => <String, Object?>{
+                  'id': item.id,
+                  'name': item.name,
+                  'plantTypeId': item.plantTypeId,
+                  'date': item.date
+                });
 
   final sqflite.DatabaseExecutor database;
 
@@ -113,6 +134,10 @@ class _$Dao extends Dao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<PlantType> _plantTypeInsertionAdapter;
+
+  final InsertionAdapter<Plant> _plantInsertionAdapter;
+
+  final UpdateAdapter<Plant> _plantUpdateAdapter;
 
   @override
   Future<List<PlantType>> findAllPlantTypes() async {
@@ -132,8 +157,38 @@ class _$Dao extends Dao {
   }
 
   @override
+  Future<List<Plant>> findAllPlants() async {
+    return _queryAdapter.queryList('SELECT * FROM Plant',
+        mapper: (Map<String, Object?> row) => Plant(
+            id: row['id'] as int?,
+            name: row['name'] as String,
+            plantTypeId: row['plantTypeId'] as int,
+            date: row['date'] as int));
+  }
+
+  @override
+  Stream<PlantType?> findPlantById(int id) {
+    return _queryAdapter.queryStream('SELECT * FROM Plant WHERE id = ?1',
+        mapper: (Map<String, Object?> row) =>
+            PlantType(id: row['id'] as int, name: row['name'] as String),
+        arguments: [id],
+        queryableName: 'PlantType',
+        isView: false);
+  }
+
+  @override
   Future<void> insertPlantType(PlantType plantType) async {
     await _plantTypeInsertionAdapter.insert(
         plantType, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> insertPlant(Plant plant) async {
+    await _plantInsertionAdapter.insert(plant, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> updatePlant(Plant plant) async {
+    await _plantUpdateAdapter.update(plant, OnConflictStrategy.abort);
   }
 }

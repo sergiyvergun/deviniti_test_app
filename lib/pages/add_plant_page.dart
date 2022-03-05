@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plants_app/blocs/search_plants_cubit.dart';
 import 'package:plants_app/models/plant_type.dart';
 import 'package:provider/provider.dart';
 
@@ -29,6 +31,12 @@ class _AddPlantPageState extends State<AddPlantPage> {
     _nameTextEditingController = TextEditingController();
     _selectedPlantType = 0;
     _date = DateTime.now().millisecondsSinceEpoch;
+
+    if (widget.plant != null) {
+      _nameTextEditingController.text = widget.plant!.name;
+      _selectedPlantType = widget.plant!.plantTypeId;
+      _date = widget.plant!.date;
+    }
     super.initState();
   }
 
@@ -47,7 +55,29 @@ class _AddPlantPageState extends State<AddPlantPage> {
   }
 
   void _save() {
-    print('saving');
+    if (_nameTextEditingController.text.isNotEmpty) {
+      if (widget.plant == null) {
+        Provider.of<Dao>(context, listen: false).insertPlant(Plant(
+            id: null,
+            name: _nameTextEditingController.text,
+            plantTypeId: _selectedPlantType,
+            date: _date));
+      } else {
+        Provider.of<Dao>(context, listen: false).updatePlant(Plant(
+            id: widget.plant!.id,
+            name: _nameTextEditingController.text,
+            plantTypeId: _selectedPlantType,
+            date: _date));
+      }
+
+      Navigator.of(context).pop();
+      BlocProvider.of<SearchPlantsCubit>(context).update();
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_nameTextEditingController.text} saved')));
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Provide some input')));
+    }
   }
 
   @override
@@ -56,7 +86,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
       appBar: AppBar(
         title: Text(widget.plant == null ? 'Add Plant' : 'Update Plant'),
         actions: [
-          FlatButton(
+          TextButton(
             onPressed: _save,
             child: const Text(
               'Save',
@@ -78,21 +108,25 @@ class _AddPlantPageState extends State<AddPlantPage> {
                 builder: (context, AsyncSnapshot<List<PlantType>> snapshot) {
                   List<PlantType>? plantTypes = snapshot.data;
 
-                  return DropdownButton(
-                      isExpanded: true,
-                      value: plantTypes!.elementAt(_selectedPlantType).id,
-                      hint: Text('Type'),
-                      items: plantTypes
-                          .map((e) => DropdownMenuItem(
-                                child: Text(e.name),
-                                value: e.id,
-                              ))
-                          .toList(),
-                      onChanged: (int? value) {
-                        setState(() {
-                          _selectedPlantType = value!;
+                  if (plantTypes != null) {
+                    return DropdownButton(
+                        isExpanded: true,
+                        value: plantTypes.elementAt(_selectedPlantType).id,
+                        hint: Text('Type'),
+                        items: plantTypes
+                            .map((e) => DropdownMenuItem(
+                                  child: Text(e.name),
+                                  value: e.id,
+                                ))
+                            .toList(),
+                        onChanged: (int? value) {
+                          setState(() {
+                            _selectedPlantType = value!;
+                          });
                         });
-                      });
+                  } else {
+                    return Container();
+                  }
                 }),
             TextButton(
               onPressed: () {

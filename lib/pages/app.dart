@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plants_app/blocs/search_plants_cubit.dart';
 import 'package:plants_app/models/plant_type.dart';
 import 'package:provider/provider.dart';
 
@@ -35,12 +37,17 @@ class _PlantsAppState extends State<PlantsApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Garden',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
+    return BlocProvider(
+      create: (BuildContext context) {
+        return SearchPlantsCubit();
+      },
+      child: MaterialApp(
+        title: 'Garden',
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        home: const MyHomePage(title: 'Garden'),
       ),
-      home: const MyHomePage(title: 'Garden'),
     );
   }
 }

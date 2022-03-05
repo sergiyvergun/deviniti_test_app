@@ -71,7 +71,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
       }
 
       Navigator.of(context).pop();
-      BlocProvider.of<SearchPlantsCubit>(context).update();
+      BlocProvider.of<SearchPlantsCubit>(context).search(null);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_nameTextEditingController.text} saved')));
     } else {

@@ -40,32 +40,31 @@ class SearchPlantsRequestFailed extends SearchPlantsState {
 }
 
 class SearchPlantsCubit extends Cubit<SearchPlantsState> {
-
   SearchPlantsCubit() : super(SearchPlantsInitialState(plants: []));
 
   late List<Plant> plants;
   late Dao dao;
+  String searchText = '';
 
-  Future<void> init() async{
-    plants =
-        await dao.findAllPlants();
+  Future<void> init() async {
+    plants = await dao.findAllPlants();
     emit(SearchPlantsRequestSucceed(plants: plants));
   }
 
-  search(String text) async{
+  search(String? text) async {
     try {
+      if (text != null) {
+        searchText = text;
+      }
       emit(SearchPlantsRequested(plants: plants));
-      plants =(await dao.findAllPlants())
+      plants = (await dao.findAllPlants())
           .where((Plant plant) =>
-              plant.name.toLowerCase().contains(text.toLowerCase()))
+              plant.name.toLowerCase().contains(searchText.toLowerCase()))
           .toList();
       emit(SearchPlantsRequestSucceed(plants: plants));
     } catch (e) {
       emit(SearchPlantsRequestFailed(plants: plants));
       rethrow;
     }
-  }
-  update(){
-    emit(SearchPlantsInitialState(plants: plants));
   }
 }

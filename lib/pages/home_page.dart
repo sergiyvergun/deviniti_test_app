@@ -70,6 +70,9 @@ class _PlantsListState extends State<_PlantsList> {
     return BlocBuilder(
         bloc: _searchPlantsCubit,
         builder: (context, SearchPlantsState state) {
+          if(state.plants!.isEmpty){
+            return Center(child: Text('No plants found'));
+          }
           return ListView.builder(
               shrinkWrap: true,
               itemCount: state.plants!.length,
@@ -105,7 +108,8 @@ class _PlantTile extends StatelessWidget {
               style: const TextStyle(color: Colors.black),
             ),
             Container(width: 20),
-            Text(plant.name),
+            Expanded(child: Text(plant.name,
+              overflow: TextOverflow.ellipsis,)),
             Spacer(),
             Text(DateFormat.yMMMd().format(date)),
             Container(
